@@ -1,668 +1,603 @@
 <!DOCTYPE html>
-<html lang="en" class="dark">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>NEXUSVOICE // TACTICAL HUD INTERFACE</title>
-<script src="https://cdn.tailwindcss.com"></script>
-<script>
-tailwind.config = {
-  darkMode: 'class',
-  theme: { extend: {
-    colors: { hud: {
-      bg: '#040d14',
-      panel: 'rgba(4, 25, 38, 0.75)',
-      border: '#00ffcc55',
-      borderBright: '#00ffcc',
-      cyan: '#00ffcc',
-      dim: '#0088aa',
-      alert: '#ff3366',
-      warn: '#ffaa00'
-    }},
-    fontFamily: {
-      mono: ['Share Tech Mono', 'JetBrains Mono', 'Fira Code', 'monospace'],
-      sans: ['Orbitron', 'Inter', 'sans-serif']
-    }
-  }}
-}
-</script>
-<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0a0a12">
+<title>Voice Studio</title>
 <style>
-:root { --hud-cyan: #00ffcc; --hud-dark: #040d14; }
-body { background-color: var(--hud-dark); color: var(--hud-cyan); font-family: 'Share Tech Mono', monospace; user-select: none; }
-.hud-grid-bg {
-  background-image:
-    linear-gradient(rgba(0, 255, 204, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0, 255, 204, 0.03) 1px, transparent 1px);
-  background-size: 30px 30px;
+:root{
+  --bg:#0a0a12;
+  --bg2:#121220;
+  --card:#16162a;
+  --card2:#1e1e36;
+  --line:#2a2a44;
+  --line2:#3a3a5c;
+  --txt:#f0f0ff;
+  --mute:#8a8aa8;
+  --acc:#7c6bff;
+  --acc2:#b16bff;
+  --ok:#4ade80;
+  --bad:#ff5d6c;
+  --warn:#fbbf24;
+  --radius:16px;
+  --radius-sm:10px;
 }
-.corner-bracket { position: relative; }
-.corner-bracket::before, .corner-bracket::after {
-  content: ''; position: absolute; width: 8px; height: 8px;
-  border-color: #00ffcc; pointer-events: none; transition: all 0.3s ease;
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--txt);
+  font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  overscroll-behavior-y:none}
+body{padding-bottom:env(safe-area-inset-bottom)}
+
+/* layout */
+.wrap{max-width:640px;margin:0 auto;padding:16px 14px 40px;min-height:100vh;display:flex;flex-direction:column;gap:14px}
+
+/* header */
+.header{display:flex;align-items:center;justify-content:space-between;padding:4px 0 8px}
+.brand{display:flex;align-items:center;gap:10px}
+.brand-mark{width:34px;height:34px;border-radius:10px;
+  background:linear-gradient(135deg,var(--acc),var(--acc2));
+  display:grid;place-items:center;flex:0 0 auto;
+  box-shadow:0 6px 20px rgba(124,107,255,.35)}
+.brand-mark svg{width:18px;height:18px;stroke:#fff;fill:none;stroke-width:2.2}
+.brand h1{margin:0;font-size:17px;font-weight:700;letter-spacing:-.3px}
+.brand p{margin:0;font-size:11px;color:var(--mute);letter-spacing:.3px}
+
+.status-pill{display:inline-flex;align-items:center;gap:6px;
+  padding:6px 10px;border-radius:999px;font-size:12px;font-weight:600;
+  background:var(--card);border:1px solid var(--line)}
+.status-pill .dot{width:8px;height:8px;border-radius:99px;background:var(--mute);flex:0 0 auto}
+.status-pill.on{color:var(--ok);border-color:rgba(74,222,128,.35);background:rgba(74,222,128,.08)}
+.status-pill.on .dot{background:var(--ok);box-shadow:0 0 8px var(--ok)}
+.status-pill.mid{color:var(--warn);border-color:rgba(251,191,36,.35);background:rgba(251,191,36,.08)}
+.status-pill.mid .dot{background:var(--warn);animation:pulse 1.4s ease-in-out infinite}
+.status-pill.off{color:var(--bad);border-color:rgba(255,93,108,.35);background:rgba(255,93,108,.08)}
+.status-pill.off .dot{background:var(--bad)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+/* card */
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:16px}
+.card h2{margin:0 0 12px;font-size:12px;letter-spacing:.8px;text-transform:uppercase;
+  color:var(--mute);font-weight:600}
+
+/* server controls */
+.server-state{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.server-state .icon{width:44px;height:44px;border-radius:12px;background:var(--card2);
+  display:grid;place-items:center;flex:0 0 auto;border:1px solid var(--line2)}
+.server-state .icon svg{width:20px;height:20px;stroke:var(--acc);fill:none;stroke-width:2}
+.server-state .info{flex:1;min-width:0}
+.server-state .title{font-weight:600;font-size:15px}
+.server-state .sub{font-size:12px;color:var(--mute);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+.btn-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+button{font:inherit;cursor:pointer;border:0;outline:none}
+.btn{padding:14px 16px;border-radius:12px;font-weight:600;font-size:14px;
+  color:#fff;background:var(--card2);border:1px solid var(--line2);
+  transition:transform .08s,opacity .15s;
+  min-height:48px;display:inline-flex;align-items:center;justify-content:center;gap:8px}
+.btn:active:not(:disabled){transform:scale(.97)}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn.primary{background:linear-gradient(135deg,var(--acc),var(--acc2));border:0;
+  box-shadow:0 6px 20px rgba(124,107,255,.3)}
+.btn.danger{color:var(--bad);border-color:rgba(255,93,108,.4);background:rgba(255,93,108,.08)}
+.btn.ghost{background:transparent}
+.btn.full{width:100%}
+
+.checkline{display:flex;align-items:center;gap:10px;padding:12px 14px;margin-top:10px;
+  background:var(--card2);border-radius:var(--radius-sm);border:1px solid var(--line);font-size:13px}
+.checkline input{width:18px;height:18px;accent-color:var(--acc);flex:0 0 auto}
+
+.msg{font-size:13px;color:var(--mute);min-height:18px;margin-top:10px;line-height:1.4}
+.msg.err{color:var(--bad)}
+.msg.ok{color:var(--ok)}
+
+/* loader */
+.loader-view{display:flex;flex-direction:column;align-items:center;gap:18px;padding:24px 8px}
+.loader-ring{position:relative;width:180px;height:180px}
+.loader-ring svg{transform:rotate(-90deg);width:100%;height:100%}
+.loader-ring circle{fill:none;stroke-width:4;stroke-linecap:round}
+.loader-ring .bg{stroke:var(--line2)}
+.loader-ring .fg{stroke:url(#grad);
+  transition:stroke-dashoffset .5s ease}
+.loader-ring .inner{position:absolute;inset:0;display:grid;place-items:center;text-align:center}
+.loader-pct{font-size:32px;font-weight:800;letter-spacing:-1px;
+  background:linear-gradient(135deg,var(--acc),var(--acc2));
+  -webkit-background-clip:text;background-clip:text;color:transparent}
+.loader-label{font-size:11px;letter-spacing:1.5px;color:var(--mute);text-transform:uppercase;margin-top:2px}
+.loader-msg{text-align:center;font-size:13px;color:var(--mute);max-width:320px;line-height:1.5}
+
+/* tabs */
+.tabs{display:grid;grid-template-columns:1fr 1fr;gap:6px;background:var(--card);
+  border:1px solid var(--line);border-radius:var(--radius);padding:5px;position:sticky;top:0;z-index:10}
+.tabs button{padding:12px;border-radius:11px;background:transparent;color:var(--mute);
+  font-weight:600;font-size:14px;transition:background .15s,color .15s;min-height:44px}
+.tabs button.active{background:linear-gradient(135deg,var(--acc),var(--acc2));color:#fff}
+
+/* section */
+.section{display:none;flex-direction:column;gap:14px}
+.section.active{display:flex}
+
+/* form fields */
+label{display:block;font-size:12px;color:var(--mute);margin:0 0 6px;font-weight:500;letter-spacing:.2px}
+input[type=text],input[type=file],select,textarea{
+  width:100%;padding:12px 14px;border-radius:var(--radius-sm);
+  border:1px solid var(--line2);background:var(--bg2);color:var(--txt);
+  font:inherit;font-size:14px;outline:none;transition:border-color .15s;min-height:46px}
+input:focus,select:focus,textarea:focus{border-color:var(--acc)}
+textarea{resize:vertical;min-height:90px;font-size:14px;line-height:1.5}
+select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238a8aa8' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 12px center;background-size:16px;padding-right:38px}
+input[type=file]{padding:10px 12px;color:var(--mute);font-size:13px}
+input[type=file]::file-selector-button{
+  background:var(--acc);color:#fff;border:0;border-radius:8px;
+  padding:8px 12px;margin-right:10px;font:inherit;font-size:13px;font-weight:600;cursor:pointer}
+
+.field{margin-bottom:14px}
+.field:last-child{margin-bottom:0}
+.field .row{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+.field .row label{margin:0}
+.field .val{font-size:13px;font-weight:600;color:var(--acc);font-variant-numeric:tabular-nums}
+
+input[type=range]{-webkit-appearance:none;width:100%;height:6px;border-radius:99px;
+  background:var(--line2);outline:none;margin:6px 0}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;
+  border-radius:99px;background:linear-gradient(135deg,var(--acc),var(--acc2));
+  cursor:pointer;box-shadow:0 2px 8px rgba(124,107,255,.5)}
+input[type=range]::-moz-range-thumb{width:22px;height:22px;border:0;border-radius:99px;
+  background:linear-gradient(135deg,var(--acc),var(--acc2));cursor:pointer}
+
+.chips{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
+.chips button{padding:8px 14px;border-radius:99px;background:var(--card2);
+  border:1px solid var(--line2);color:var(--txt);font-size:13px;font-weight:500;min-height:36px}
+
+/* recorder */
+.rec-row{display:flex;gap:10px;align-items:center}
+.rec-row input[type=file]{flex:1;min-width:0}
+.rec-btn{flex:0 0 auto;width:48px;height:48px;border-radius:12px;background:var(--card2);
+  border:1px solid var(--line2);display:grid;place-items:center;padding:0}
+.rec-btn svg{width:20px;height:20px;stroke:var(--txt);fill:none;stroke-width:2}
+.rec-btn.recording{background:rgba(255,93,108,.15);border-color:var(--bad);animation:pulse 1s infinite}
+.rec-btn.recording svg{stroke:var(--bad)}
+
+audio{width:100%;margin-top:10px;border-radius:var(--radius-sm);background:var(--bg2)}
+
+/* results */
+.result{background:var(--card2);border:1px solid var(--line2);border-radius:var(--radius-sm);
+  padding:12px;margin-top:10px}
+.result .meta{font-size:11px;color:var(--mute);letter-spacing:.3px;margin-bottom:8px;
+  display:flex;flex-wrap:wrap;gap:6px}
+.result .meta span{padding:2px 8px;background:var(--bg);border-radius:99px;border:1px solid var(--line)}
+.result .actions{display:flex;gap:8px;margin-top:8px}
+.result .actions a{flex:1;text-align:center;padding:10px;border-radius:10px;
+  background:var(--card);border:1px solid var(--line2);color:var(--acc);
+  text-decoration:none;font-size:13px;font-weight:600}
+
+/* details/summary */
+details{background:var(--card2);border:1px solid var(--line);border-radius:var(--radius-sm);
+  padding:0;margin-top:10px;overflow:hidden}
+details summary{padding:14px 16px;cursor:pointer;font-size:13px;color:var(--mute);
+  font-weight:600;letter-spacing:.3px;list-style:none;
+  display:flex;align-items:center;justify-content:space-between}
+details summary::-webkit-details-marker{display:none}
+details summary::after{content:"›";font-size:20px;color:var(--mute);
+  transform:rotate(90deg);transition:transform .2s;line-height:1}
+details[open] summary::after{transform:rotate(-90deg)}
+details .body{padding:0 16px 16px}
+
+/* toast */
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(120%);
+  background:var(--card2);border:1px solid var(--line2);border-radius:12px;
+  padding:14px 18px;box-shadow:0 8px 30px rgba(0,0,0,.5);font-size:14px;
+  transition:transform .3s ease;z-index:100;max-width:90vw;text-align:center}
+.toast.show{transform:translateX(-50%) translateY(0)}
+.toast.ok{border-color:rgba(74,222,128,.4);color:var(--ok)}
+.toast.err{border-color:rgba(255,93,108,.4);color:var(--bad)}
+
+/* hide/show helpers */
+.hidden{display:none !important}
+
+@media(min-width:600px){
+  .wrap{padding:24px 20px 40px;gap:16px}
+  .brand h1{font-size:19px}
+  .loader-ring{width:200px;height:200px}
+  .loader-pct{font-size:36px}
 }
-.corner-bracket::before { top: 0; left: 0; border-top: 2px solid #00ffcc; border-left: 2px solid #00ffcc; }
-.corner-bracket::after  { bottom: 0; right: 0; border-bottom: 2px solid #00ffcc; border-right: 2px solid #00ffcc; }
-.hud-panel {
-  background: rgba(4, 20, 30, 0.72);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(0, 255, 204, 0.3);
-  box-shadow: 0 0 15px rgba(0, 255, 204, 0.1), inset 0 0 15px rgba(0, 255, 204, 0.05);
-  transition: border-color 0.3s, box-shadow 0.3s;
-}
-.hud-panel:hover { border-color: rgba(0, 255, 204, 0.7); }
-.glow-text { text-shadow: 0 0 8px rgba(0, 255, 204, 0.6); }
-.glow-text-alert { text-shadow: 0 0 8px rgba(255, 51, 102, 0.8); }
-::-webkit-scrollbar { width: 4px; }
-::-webkit-scrollbar-track { background: rgba(4, 13, 20, 0.5); }
-::-webkit-scrollbar-thumb { background: rgba(0, 255, 204, 0.4); border-radius: 2px; }
-
-/* form fields styled to match */
-input[type=text], input[type=file], select, textarea {
-  background: rgba(0, 20, 30, 0.6) !important;
-  border: 1px solid rgba(0, 255, 204, 0.3) !important;
-  color: #00ffcc !important;
-  font-family: 'Share Tech Mono', monospace !important;
-  outline: none;
-  border-radius: 3px;
-}
-input[type=text]:focus, select:focus, textarea:focus {
-  border-color: rgba(0, 255, 204, 0.9) !important;
-  box-shadow: 0 0 12px rgba(0, 255, 204, 0.3);
-}
-input[type=range] { accent-color: #00ffcc; }
-input::placeholder, textarea::placeholder { color: rgba(0, 136, 170, 0.6) !important; }
-
-.hud-btn {
-  border: 1px solid rgba(0, 255, 204, 0.5);
-  background: rgba(0, 255, 204, 0.08);
-  color: #00ffcc;
-  font-family: 'Orbitron', sans-serif;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  transition: all 0.2s ease;
-  border-radius: 3px;
-}
-.hud-btn:hover:not(:disabled) { background: rgba(0, 255, 204, 0.22); box-shadow: 0 0 12px rgba(0, 255, 204, 0.4); }
-.hud-btn:disabled { opacity: 0.35; cursor: not-allowed; }
-.hud-btn-alert {
-  border-color: rgba(255, 51, 102, 0.6);
-  background: rgba(255, 51, 102, 0.08);
-  color: #ff3366;
-}
-.hud-btn-alert:hover:not(:disabled) { background: rgba(255, 51, 102, 0.22); box-shadow: 0 0 12px rgba(255, 51, 102, 0.5); }
-
-.tab-btn { border: 1px solid rgba(0, 255, 204, 0.3); background: transparent; color: #0088aa; }
-.tab-btn.active { background: rgba(0, 255, 204, 0.15); color: #00ffcc; border-color: rgba(0, 255, 204, 0.8); box-shadow: inset 0 0 12px rgba(0, 255, 204, 0.15); }
-
-/* big loader ring */
-.loader-ring { transform: rotate(-90deg); }
-.loader-ring circle { fill: none; stroke-width: 3; }
-.loader-ring .bg { stroke: rgba(0, 255, 204, 0.1); }
-.loader-ring .fg { stroke: #00ffcc; stroke-linecap: round; transition: stroke-dashoffset 0.5s ease, stroke 0.4s; filter: drop-shadow(0 0 6px rgba(0, 255, 204, 0.7)); }
-.loader-ring.ready .fg { stroke: #4ade80; }
-
-@keyframes pulse-slow { 0%,100%{opacity:1} 50%{opacity:0.4} }
-.pulse-slow { animation: pulse-slow 2.2s ease-in-out infinite; }
-
-.section { display: none; }
-.section.active { display: block; }
-
-/* record state */
-.rec-active { color: #ff3366 !important; text-shadow: 0 0 8px rgba(255,51,102,0.8); }
 </style>
 </head>
-<body class="w-screen h-screen hud-grid-bg flex flex-col justify-between p-2 md:p-4 text-xs md:text-sm">
+<body>
+<div class="wrap">
 
-<!-- ===== HEADER ===== -->
-<header class="w-full flex items-center justify-between border-b border-hud-cyan/40 pb-2 px-2 z-20 flex-wrap gap-2">
-  <div class="flex items-center space-x-3">
-    <div id="header-dot" class="w-3 h-3 bg-hud-alert rounded-full shadow-[0_0_10px_#ff3366] transition-all"></div>
-    <div class="flex flex-col">
-      <h1 class="font-sans font-black tracking-widest text-base md:text-xl glow-text text-hud-cyan">NEXUSVOICE</h1>
-      <span class="text-[10px] text-hud-dim tracking-wider">TACTICAL NEURAL VOICE SYNTH // MK-VII</span>
+  <!-- header -->
+  <header class="header">
+    <div class="brand">
+      <div class="brand-mark">
+        <svg viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round"
+          d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/></svg>
+      </div>
+      <div>
+        <h1>Voice Studio</h1>
+        <p>Neural voice conversion</p>
+      </div>
     </div>
-  </div>
-
-  <div class="hidden md:flex items-center space-x-6 text-xs tracking-widest">
-    <div class="flex items-center space-x-2">
-      <span class="text-hud-dim">SYS:</span>
-      <span id="sys-status-badge" class="text-hud-alert glow-text-alert font-bold">OFFLINE</span>
-    </div>
-    <div class="flex items-center space-x-2">
-      <span class="text-hud-dim">LOCAL:</span>
-      <span id="local-clock" class="text-hud-cyan">--:--:--</span>
-    </div>
-  </div>
-
-  <div class="flex items-center space-x-3">
-    <button id="notify-btn" class="px-2.5 py-1 text-[11px] border border-hud-cyan/50 rounded hover:bg-hud-cyan/20 transition text-hud-cyan tracking-wider">
-      ENABLE ALERTS
+    <button id="notify-btn" class="status-pill off" style="cursor:pointer">
+      <span class="dot"></span>
+      <span id="pill-text">Offline</span>
     </button>
-    <div class="corner-bracket px-3 py-1 border border-hud-cyan/60 rounded bg-hud-panel font-sans font-bold text-xs tracking-widest text-hud-cyan">
-      OPERATOR // DEV
+  </header>
+
+  <!-- server card -->
+  <div class="card">
+    <div class="server-state">
+      <div class="icon">
+        <svg viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round"
+          d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01"/></svg>
+      </div>
+      <div class="info">
+        <div class="title" id="server-title">Server offline</div>
+        <div class="sub" id="server-sub">Tap Start to boot the GPU backend</div>
+      </div>
     </div>
+
+    <div class="btn-row">
+      <button class="btn primary" id="start-btn">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        Start
+      </button>
+      <button class="btn danger" id="stop-btn">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>
+        Stop
+      </button>
+    </div>
+
+    <label class="checkline">
+      <input type="checkbox" id="cpu-mode">
+      <span>CPU-only mode (skip GPU hours)</span>
+    </label>
+
+    <div class="msg" id="server-msg"></div>
   </div>
-</header>
 
-<!-- ===== MAIN ===== -->
-<main class="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-3 my-2 overflow-hidden z-10 min-h-0">
-
-  <!-- LEFT: server state + telemetry -->
-  <section class="lg:col-span-3 flex flex-col gap-3 h-full overflow-y-auto">
-
-    <div class="hud-panel corner-bracket rounded p-3 flex flex-col gap-3">
-      <div class="flex justify-between items-center border-b border-hud-cyan/20 pb-1">
-        <span class="font-sans text-xs tracking-widest font-bold text-hud-cyan">SERVER // CONTROL</span>
-        <span id="server-state-tag" class="text-[10px] text-hud-dim">IDLE</span>
-      </div>
-
-      <div class="grid grid-cols-2 gap-2 text-[11px]">
-        <div>
-          <div class="text-hud-dim">Kaggle</div>
-          <div id="kaggle-state" class="font-bold glow-text">—</div>
-        </div>
-        <div>
-          <div class="text-hud-dim">Tunnel</div>
-          <div id="tunnel-state" class="font-bold glow-text">—</div>
-        </div>
-      </div>
-
-      <div class="flex gap-2 mt-1">
-        <button id="start-btn" class="hud-btn flex-1 py-2 text-[11px]">START</button>
-        <button id="stop-btn" class="hud-btn hud-btn-alert flex-1 py-2 text-[11px]">STOP</button>
-      </div>
-
-      <label class="flex items-center gap-2 text-[10px] text-hud-dim mt-1">
-        <input type="checkbox" id="cpu-mode" class="accent-hud-cyan"> CPU-ONLY MODE
-      </label>
-
-      <div id="server-msg" class="text-[10px] text-hud-dim min-h-[14px] leading-tight"></div>
-    </div>
-
-    <div class="hud-panel corner-bracket rounded p-3 flex flex-col gap-2.5">
-      <div class="flex justify-between items-center border-b border-hud-cyan/20 pb-1">
-        <span class="font-sans text-xs tracking-widest font-bold text-hud-cyan">SYSTEM // VITALS</span>
-        <span class="text-[10px] text-hud-dim">BIO-SYNC 98.4%</span>
-      </div>
-      <div class="grid grid-cols-2 gap-2">
-        <div>
-          <div class="text-[10px] text-hud-dim">Heart Rate</div>
-          <div class="text-xl font-bold glow-text flex items-baseline gap-1">
-            <span id="vital-bpm">72</span><span class="text-xs font-normal">BPM</span>
-          </div>
-        </div>
-        <div>
-          <div class="text-[10px] text-hud-dim">Neural Link</div>
-          <div class="text-sm font-bold text-hud-cyan tracking-wider mt-1">ACTIVE</div>
-        </div>
-      </div>
-      <div class="h-10 w-full bg-hud-dark/60 rounded border border-hud-cyan/20 overflow-hidden flex items-center">
-        <svg class="w-full h-full stroke-hud-cyan fill-none" stroke-width="1.5" viewBox="0 0 200 40" preserveAspectRatio="none">
-          <path d="M0,20 L30,20 L40,10 L50,30 L60,15 L70,25 L80,20 L120,20 L130,5 L140,35 L150,15 L160,25 L170,20 L200,20"/>
+  <!-- loader view -->
+  <div id="loader-view" class="card">
+    <div class="loader-view">
+      <div class="loader-ring">
+        <svg viewBox="0 0 120 120">
+          <defs>
+            <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#7c6bff"/>
+              <stop offset="100%" stop-color="#b16bff"/>
+            </linearGradient>
+          </defs>
+          <circle class="bg" cx="60" cy="60" r="52"/>
+          <circle id="loader-fg" class="fg" cx="60" cy="60" r="52"
+                  stroke-dasharray="326.726" stroke-dashoffset="326.726"/>
         </svg>
-      </div>
-      <div class="flex justify-between text-[10px] text-hud-dim">
-        <span>Temp: <strong class="text-hud-cyan">98.6°F</strong></span>
-        <span>Cortisol: <strong class="text-hud-cyan">NOMINAL</strong></span>
-      </div>
-    </div>
-
-    <div class="hud-panel corner-bracket rounded p-3 flex flex-col gap-3">
-      <div class="flex justify-between items-center border-b border-hud-cyan/20 pb-1">
-        <span class="font-sans text-xs tracking-widest font-bold text-hud-cyan">SYSTEM // LOAD</span>
-        <span class="text-[10px] text-hud-dim">CORE</span>
-      </div>
-      <div class="flex flex-col gap-1">
-        <div class="flex justify-between text-xs"><span class="text-hud-dim">CPU</span><span id="cpu-val" class="font-bold text-hud-cyan">24%</span></div>
-        <div class="w-full h-1.5 bg-hud-dark rounded overflow-hidden border border-hud-cyan/30">
-          <div id="cpu-bar" class="h-full bg-hud-cyan transition-all duration-500" style="width:24%"></div>
-        </div>
-      </div>
-      <div class="flex flex-col gap-1">
-        <div class="flex justify-between text-xs"><span class="text-hud-dim">MEM</span><span id="mem-val" class="font-bold text-hud-cyan">12.4 GB</span></div>
-        <div class="w-full h-1.5 bg-hud-dark rounded overflow-hidden border border-hud-cyan/30">
-          <div id="mem-bar" class="h-full bg-hud-cyan/80 transition-all duration-500" style="width:38%"></div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- CENTER: main working area -->
-  <section class="lg:col-span-6 flex flex-col hud-panel rounded corner-bracket p-4 min-h-[420px] lg:min-h-0 overflow-hidden">
-
-    <div class="flex justify-between items-center border-b border-hud-cyan/20 pb-1 mb-3">
-      <span class="font-sans text-xs tracking-widest font-bold text-hud-cyan">NEXUS // WORKSPACE</span>
-      <span id="center-tag" class="text-[10px] text-hud-dim">STANDBY</span>
-    </div>
-
-    <!-- loader view (shown when server not ready) -->
-    <div id="loader-view" class="flex-1 flex flex-col items-center justify-center gap-4">
-      <svg class="loader-ring" width="200" height="200" viewBox="0 0 120 120">
-        <circle class="bg" cx="60" cy="60" r="54"></circle>
-        <circle id="loader-fg" class="fg" cx="60" cy="60" r="54"
-                stroke-dasharray="339.292" stroke-dashoffset="339.292"></circle>
-      </svg>
-      <div class="-mt-32 text-center pointer-events-none">
-        <div id="loader-pct" class="font-sans font-black text-3xl glow-text text-hud-cyan">0%</div>
-        <div id="loader-label" class="text-[10px] tracking-widest text-hud-dim mt-1">SYSTEM OFFLINE</div>
-      </div>
-      <div id="loader-msg" class="text-[11px] text-hud-dim text-center max-w-sm px-4">
-        Press START to initialize the neural voice core.
-      </div>
-    </div>
-
-    <!-- workspace view (shown when server online) -->
-    <div id="work-view" class="flex-1 flex flex-col min-h-0 hidden">
-
-      <div class="flex gap-1 mb-3">
-        <button id="tab-convert" class="tab-btn active flex-1 py-1.5 text-[11px] tracking-widest font-bold">CONVERT</button>
-        <button id="tab-tts" class="tab-btn flex-1 py-1.5 text-[11px] tracking-widest font-bold">TEXT → SPEECH</button>
-      </div>
-
-      <!-- CONVERT PANEL -->
-      <div id="pane-convert" class="section active flex-1 overflow-y-auto pr-1 flex flex-col gap-3">
-
-        <div class="border border-hud-cyan/20 rounded p-3">
-          <div class="text-[10px] text-hud-dim mb-2 tracking-widest">SOURCE // INPUT</div>
-          <div class="flex gap-2 items-center flex-wrap">
-            <input type="file" id="file" accept="audio/*,.wav,.mp3,.flac,.ogg,.m4a,.webm" class="flex-1 text-[11px] py-1.5 px-2">
-            <button id="rec-btn" class="hud-btn px-3 py-1.5 text-[11px]">REC</button>
-          </div>
-          <div id="rec-info" class="text-[10px] text-hud-dim mt-2 min-h-[14px]"></div>
-          <audio id="preview" controls class="w-full mt-2 hidden"></audio>
-        </div>
-
-        <div class="border border-hud-cyan/20 rounded p-3 grid grid-cols-2 gap-3">
-          <div class="col-span-2 text-[10px] text-hud-dim tracking-widest">PARAMETERS</div>
-          <div class="col-span-2">
-            <label class="flex justify-between text-[11px] text-hud-dim">PITCH <span id="pitch-v" class="text-hud-cyan">+10</span></label>
-            <input type="range" id="pitch" min="-24" max="24" step="1" value="10" class="w-full">
-          </div>
-          <div class="col-span-2">
-            <label class="flex justify-between text-[11px] text-hud-dim">INDEX RATE <span id="ir-v" class="text-hud-cyan">0.30</span></label>
-            <input type="range" id="ir" min="0" max="1" step="0.05" value="0.3" class="w-full">
-          </div>
+        <div class="inner">
           <div>
-            <label class="text-[11px] text-hud-dim">F0 METHOD</label>
-            <select id="f0" class="w-full py-1 px-2 text-[11px] mt-1"><option>rmvpe</option></select>
-          </div>
-          <div>
-            <label class="text-[11px] text-hud-dim">FORMAT</label>
-            <select id="fmt" class="w-full py-1 px-2 text-[11px] mt-1"><option>WAV</option></select>
+            <div class="loader-pct" id="loader-pct">0%</div>
+            <div class="loader-label" id="loader-label">Standby</div>
           </div>
         </div>
-
-        <button id="convert-btn" class="hud-btn w-full py-3 text-sm" disabled>EXECUTE CONVERSION</button>
-        <div id="convert-msg" class="text-[11px] text-hud-dim min-h-[14px]"></div>
-        <div id="convert-results" class="flex flex-col gap-2"></div>
       </div>
-
-      <!-- TTS PANEL -->
-      <div id="pane-tts" class="section flex-1 overflow-y-auto pr-1 flex flex-col gap-3">
-        <div class="border border-hud-cyan/20 rounded p-3">
-          <div class="text-[10px] text-hud-dim mb-2 tracking-widest">TEXT // INPUT</div>
-          <textarea id="text" rows="3" class="w-full py-2 px-2 text-[12px]" placeholder="Type what you want the neural core to say..."></textarea>
-        </div>
-
-        <div class="border border-hud-cyan/20 rounded p-3 grid grid-cols-2 gap-3">
-          <div class="col-span-2 text-[10px] text-hud-dim tracking-widest">PARAMETERS</div>
-          <div class="col-span-2">
-            <label class="text-[11px] text-hud-dim">VOICE</label>
-            <select id="voice" class="w-full py-1 px-2 text-[11px] mt-1"><option value="">awaiting link...</option></select>
-          </div>
-          <div>
-            <label class="flex justify-between text-[11px] text-hud-dim">PITCH <span id="tpitch-v" class="text-hud-cyan">+10</span></label>
-            <input type="range" id="tpitch" min="-24" max="24" step="1" value="10" class="w-full">
-          </div>
-          <div>
-            <label class="flex justify-between text-[11px] text-hud-dim">INDEX <span id="tir-v" class="text-hud-cyan">0.30</span></label>
-            <input type="range" id="tir" min="0" max="1" step="0.05" value="0.3" class="w-full">
-          </div>
-          <div class="col-span-2">
-            <label class="flex justify-between text-[11px] text-hud-dim">RATE <span id="rate-v" class="text-hud-cyan">0</span></label>
-            <input type="range" id="rate" min="-50" max="50" step="5" value="0" class="w-full">
-          </div>
-        </div>
-
-        <button id="speak-btn" class="hud-btn w-full py-3 text-sm" disabled>GENERATE SPEECH</button>
-        <div id="tts-msg" class="text-[11px] text-hud-dim min-h-[14px]"></div>
-        <div id="tts-results" class="flex flex-col gap-2"></div>
-      </div>
-    </div>
-  </section>
-
-  <!-- RIGHT: activity log + CLI -->
-  <section class="lg:col-span-3 flex flex-col gap-3 h-full overflow-hidden">
-
-    <div class="hud-panel corner-bracket rounded p-3 flex flex-col h-[42%] overflow-hidden">
-      <div class="flex justify-between items-center border-b border-hud-cyan/20 pb-1 mb-2">
-        <span class="font-sans text-xs tracking-widest font-bold text-hud-cyan">NEXUS // LOG</span>
-        <span id="log-status" class="text-[10px] text-hud-dim">IDLE</span>
-      </div>
-      <div id="log-container" class="flex-1 overflow-y-auto space-y-1 text-[11px] font-mono pr-1">
-        <div class="text-hud-dim">[BOOT] NEXUSVOICE shell ready.</div>
-        <div class="text-hud-dim">[BOOT] Awaiting server link...</div>
-      </div>
-    </div>
-
-    <div class="hud-panel corner-bracket rounded p-3 flex-1 flex flex-col overflow-hidden">
-      <div class="flex justify-between items-center border-b border-hud-cyan/20 pb-1">
-        <span class="font-sans text-xs tracking-widest font-bold text-hud-cyan">ROOT@NEXUSVOICE:~</span>
-        <span class="text-[10px] text-hud-dim">CLI</span>
-      </div>
-      <div id="cli-output" class="flex-1 overflow-y-auto py-2 text-[11px] font-mono space-y-1 text-hud-dim">
-        <div class="text-hud-cyan">&gt; nexus --help</div>
-        <div>Commands: <span class="text-hud-cyan">start, stop, status, convert, speak, clear, help</span></div>
-      </div>
-      <form id="cli-form" class="flex items-center gap-1.5 border-t border-hud-cyan/30 pt-2">
-        <span class="text-hud-cyan font-bold">&gt;</span>
-        <input type="text" id="cli-input" autocomplete="off" placeholder="type a command..."
-               class="w-full bg-transparent text-hud-cyan placeholder-hud-dim/50 focus:outline-none text-xs font-mono !border-0 !bg-transparent" style="border:0 !important;background:transparent !important;">
-        <button type="submit" class="px-2 py-0.5 text-[10px] bg-hud-cyan/20 border border-hud-cyan/50 text-hud-cyan rounded hover:bg-hud-cyan/40">EXEC</button>
-      </form>
-    </div>
-  </section>
-</main>
-
-<!-- ===== FOOTER ===== -->
-<footer class="w-full flex flex-col md:flex-row items-center justify-between gap-3 hud-panel rounded corner-bracket px-4 py-2.5 z-20">
-  <div class="flex items-center space-x-3 w-full md:w-auto">
-    <div class="p-2 border border-hud-cyan/50 rounded-full bg-hud-cyan/10">
-      <svg class="w-4 h-4 text-hud-cyan" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/>
-      </svg>
-    </div>
-    <div class="flex flex-col">
-      <span class="text-xs font-sans font-bold text-hud-cyan tracking-wider">AUDIO // OUTPUT</span>
-      <span id="footer-sub" class="text-[10px] text-hud-dim">STANDBY</span>
+      <div class="loader-msg" id="loader-msg">Press Start to boot the neural voice core.</div>
     </div>
   </div>
 
-  <div id="wave-container" class="flex-1 w-full max-w-xl h-10 flex items-center justify-center gap-1 px-4"></div>
+  <!-- workspace -->
+  <div id="work-view" class="hidden" style="display:flex;flex-direction:column;gap:14px">
 
-  <div class="flex items-center space-x-2 w-full md:w-auto justify-end">
-    <button id="check-btn" class="hud-btn px-3 py-1.5 text-[11px]">RE-SYNC</button>
-    <button id="clear-results-btn" class="hud-btn hud-btn-alert px-3 py-1.5 text-[11px]">PURGE</button>
+    <!-- tabs -->
+    <div class="tabs">
+      <button id="tab-convert" class="active">Convert</button>
+      <button id="tab-tts">Text to Speech</button>
+    </div>
+
+    <!-- CONVERT -->
+    <div id="sec-convert" class="section active">
+
+      <div class="card">
+        <h2>Audio source</h2>
+        <div class="rec-row">
+          <input type="file" id="file" accept="audio/*,.wav,.mp3,.flac,.ogg,.m4a,.webm">
+          <button class="rec-btn" id="rec-btn" title="Record">
+            <svg viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round"
+              d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/></svg>
+          </button>
+        </div>
+        <div class="msg" id="rec-info"></div>
+        <audio id="preview" controls class="hidden"></audio>
+      </div>
+
+      <div class="card">
+        <h2>Voice settings</h2>
+
+        <div class="field">
+          <div class="row">
+            <label>Pitch shift</label>
+            <span class="val" id="pitch-v">+10</span>
+          </div>
+          <input type="range" id="pitch" min="-24" max="24" step="1" value="10">
+          <div class="chips">
+            <button data-p="0">0</button>
+            <button data-p="6">+6</button>
+            <button data-p="10">+10</button>
+            <button data-p="12">+12</button>
+          </div>
+        </div>
+
+        <div class="field">
+          <div class="row">
+            <label>Index rate</label>
+            <span class="val" id="ir-v">0.30</span>
+          </div>
+          <input type="range" id="ir" min="0" max="1" step="0.05" value="0.3">
+        </div>
+
+        <details>
+          <summary>Advanced options</summary>
+          <div class="body">
+            <div class="field">
+              <label>Pitch extraction</label>
+              <select id="f0"><option>rmvpe</option></select>
+            </div>
+            <div class="field">
+              <label>Export format</label>
+              <select id="fmt"><option>WAV</option></select>
+            </div>
+          </div>
+        </details>
+      </div>
+
+      <button class="btn primary full" id="convert-btn" disabled>Convert voice</button>
+      <div class="msg" id="convert-msg"></div>
+      <div id="convert-results"></div>
+    </div>
+
+    <!-- TTS -->
+    <div id="sec-tts" class="section">
+
+      <div class="card">
+        <h2>Text to speak</h2>
+        <textarea id="text" placeholder="Type what you want the voice to say..."></textarea>
+      </div>
+
+      <div class="card">
+        <h2>Voice settings</h2>
+
+        <div class="field">
+          <label>Voice</label>
+          <select id="voice"><option value="">Connect first</option></select>
+        </div>
+
+        <div class="field">
+          <div class="row">
+            <label>Pitch shift</label>
+            <span class="val" id="tpitch-v">+10</span>
+          </div>
+          <input type="range" id="tpitch" min="-24" max="24" step="1" value="10">
+        </div>
+
+        <div class="field">
+          <div class="row">
+            <label>Index rate</label>
+            <span class="val" id="tir-v">0.30</span>
+          </div>
+          <input type="range" id="tir" min="0" max="1" step="0.05" value="0.3">
+        </div>
+
+        <div class="field">
+          <div class="row">
+            <label>Speaking rate</label>
+            <span class="val" id="rate-v">0</span>
+          </div>
+          <input type="range" id="rate" min="-50" max="50" step="5" value="0">
+        </div>
+      </div>
+
+      <button class="btn primary full" id="speak-btn" disabled>Generate speech</button>
+      <div class="msg" id="tts-msg"></div>
+      <div id="tts-results"></div>
+    </div>
   </div>
-</footer>
+
+</div>
+
+<div class="toast" id="toast"></div>
 
 <script>
-/* ============================================================
-   CONFIG
-============================================================ */
 const BACKEND = "https://voice-seb4.onrender.com";
 const POLL_MS = 10000;
-const LS_KEY = "nexusvoice_state_v1";
-
+const CIRC = 2 * Math.PI * 52;
 const $ = id => document.getElementById(id);
 
-/* ============================================================
-   STATE
-============================================================ */
 let state = {
   active: false,
   hasLink: false,
-  kaggleState: null,
-  lastMessage: null,
+  wasOnline: false,
   maxProgress: 0,
   lastNotifiedReadyAt: 0,
-  wasOnline: false,
-  resultBlob: null,
-  resultName: "audio.wav"
+  voicesLoaded: false,
+  audioBlob: null,
+  audioName: "audio.wav",
 };
-try {
-  const saved = JSON.parse(localStorage.getItem(LS_KEY) || "{}");
-  if (saved.lastNotifiedReadyAt) state.lastNotifiedReadyAt = saved.lastNotifiedReadyAt;
-  if (saved.wasOnline !== undefined) state.wasOnline = saved.wasOnline;
-} catch(e) {}
 
-function persist() {
-  try { localStorage.setItem(LS_KEY, JSON.stringify({
-    lastNotifiedReadyAt: state.lastNotifiedReadyAt,
-    wasOnline: state.wasOnline
-  })); } catch(e) {}
+/* ---------- toast ---------- */
+let toastTimer = null;
+function toast(text, kind){
+  const el = $("toast");
+  el.textContent = text;
+  el.className = "toast show " + (kind || "");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove("show"), 3200);
 }
 
-/* ============================================================
-   LOGGING (right panel)
-============================================================ */
-function logLine(text, kind) {
-  const c = $("log-container");
-  const now = new Date().toTimeString().split(" ")[0];
-  const div = document.createElement("div");
-  const cls = kind === "alert" ? "text-hud-alert glow-text-alert font-bold"
-             : kind === "ok"    ? "text-hud-cyan font-bold"
-             : "text-hud-dim";
-  div.className = cls;
-  div.textContent = `[${now}] ${text}`;
-  c.appendChild(div);
-  c.scrollTop = c.scrollHeight;
-  while (c.children.length > 120) c.removeChild(c.firstChild);
-}
+/* ---------- msg helper ---------- */
+function msg(el, text, cls){ el.textContent = text || ""; el.className = "msg " + (cls || ""); }
 
-/* ============================================================
-   API
-============================================================ */
-async function api(path, opts) {
+/* ---------- api ---------- */
+async function api(path, opts){
   const r = await fetch(BACKEND + path, opts);
-  let j; try { j = await r.json(); } catch(e) { throw new Error("Non-JSON response (" + r.status + ")"); }
-  if (!r.ok || j.ok === false) throw new Error(j.error || ("Request failed (" + r.status + ")"));
+  let j; try{ j = await r.json(); }catch(e){ throw new Error("Bad response (" + r.status + ")"); }
+  if(!r.ok || j.ok === false) throw new Error(j.error || ("HTTP " + r.status));
   return j;
 }
 
-/* ============================================================
-   LOADER
-============================================================ */
-const CIRC = 2 * Math.PI * 54;   // r=54
-
-function setLoader(pct, label, msg) {
-  const clamped = Math.max(0, Math.min(100, pct));
-  state.maxProgress = Math.max(state.maxProgress, clamped);
+/* ---------- loader ---------- */
+function setLoader(pct, label, message){
+  const c = Math.max(0, Math.min(100, pct));
+  state.maxProgress = Math.max(state.maxProgress, c);
   const use = state.maxProgress;
-  $("loader-fg").style.strokeDashoffset = CIRC * (1 - use / 100);
+  $("loader-fg").style.strokeDashoffset = CIRC * (1 - use/100);
   $("loader-pct").textContent = use.toFixed(0) + "%";
   $("loader-label").textContent = label;
-  if (msg !== undefined) $("loader-msg").textContent = msg;
-  const ring = document.querySelector(".loader-ring");
-  if (use >= 100) ring.classList.add("ready"); else ring.classList.remove("ready");
+  if(message !== undefined) $("loader-msg").textContent = message;
 }
 
 const PROGRESS_MAP = [
-  { re: /no cache found/,         pct: 5  },
-  { re: /using cached libraries/, pct: 12 },
+  { re: /no cache found/,          pct: 5  },
+  { re: /using cached libraries/,  pct: 12 },
   { re: /downloading Applio models/, pct: 35 },
-  { re: /copying voice files/,    pct: 60 },
-  { re: /installing pyngrok/,     pct: 72 },
-  { re: /starting Applio/,        pct: 85 },
-  { re: /opening ngrok tunnel/,   pct: 93 },
-  { re: /^LINK /,                 pct: 97 },
+  { re: /copying voice files/,     pct: 60 },
+  { re: /installing pyngrok/,      pct: 72 },
+  { re: /starting Applio/,         pct: 85 },
+  { re: /opening ngrok tunnel/,    pct: 93 },
+  { re: /^LINK /,                  pct: 97 },
 ];
-
-function progressFromMessage(msg) {
+function progressFromMessage(m){
   let pct = 0;
-  if (msg) for (const m of PROGRESS_MAP) if (m.re.test(msg)) pct = Math.max(pct, m.pct);
+  if(m) for(const x of PROGRESS_MAP) if(x.re.test(m)) pct = Math.max(pct, x.pct);
   return pct;
 }
 
-/* ============================================================
-   STATUS POLL
-============================================================ */
-async function refresh() {
-  try {
+/* ---------- status ---------- */
+async function refresh(){
+  try{
     const j = await api("/api/status");
-
     const nowActive = !!j.active;
     const nowLink   = !!j.link;
-    const kaggle    = (j.kaggle_state || "—").toUpperCase();
-
-    // log transitions
-    if (j.last_message && j.last_message !== state.lastMessage) {
-      logLine(j.last_message, /failed/i.test(j.last_message) ? "alert" : "");
-    }
+    const online    = nowActive && nowLink;
 
     state.active = nowActive;
     state.hasLink = nowLink;
-    state.kaggleState = kaggle;
-    state.lastMessage = j.last_message;
 
-    // header dot + sys badge
-    const online = nowActive && nowLink;
-    if (online) {
-      $("header-dot").className = "w-3 h-3 bg-hud-cyan rounded-full shadow-[0_0_10px_#00ffcc]";
-      $("sys-status-badge").className = "text-hud-cyan glow-text font-bold";
-      $("sys-status-badge").textContent = "ONLINE";
-    } else if (nowActive) {
-      $("header-dot").className = "w-3 h-3 bg-hud-warn rounded-full shadow-[0_0_10px_#ffaa00] pulse-slow";
-      $("sys-status-badge").className = "text-hud-warn font-bold";
-      $("sys-status-badge").textContent = "BOOTING";
+    // header pill
+    const pill = $("notify-btn");
+    const pillText = $("pill-text");
+    if(online){
+      pill.className = "status-pill on"; pillText.textContent = "Online";
+    } else if(nowActive){
+      pill.className = "status-pill mid"; pillText.textContent = "Booting";
     } else {
-      $("header-dot").className = "w-3 h-3 bg-hud-alert rounded-full shadow-[0_0_10px_#ff3366]";
-      $("sys-status-badge").className = "text-hud-alert glow-text-alert font-bold";
-      $("sys-status-badge").textContent = "OFFLINE";
+      pill.className = "status-pill off"; pillText.textContent = "Offline";
     }
 
-    // left panel
-    $("kaggle-state").textContent = kaggle;
-    $("tunnel-state").textContent = nowLink ? "LIVE" : "—";
-    $("server-state-tag").textContent = online ? "READY" : (nowActive ? "BOOTING" : "IDLE");
+    // server state card
+    if(online){
+      $("server-title").textContent = "Server ready";
+      $("server-sub").textContent = "Neural core online";
+    } else if(nowActive){
+      $("server-title").textContent = "Booting…";
+      $("server-sub").textContent = j.last_message || "Starting up";
+    } else {
+      $("server-title").textContent = "Server offline";
+      $("server-sub").textContent = "Tap Start to boot the GPU backend";
+    }
 
-    // loader vs workspace
-    if (online) {
+    // view swap
+    if(online){
       $("loader-view").classList.add("hidden");
       $("work-view").classList.remove("hidden");
-      $("center-tag").textContent = "OPERATIONAL";
-      $("loader-msg").textContent = "";
-      $("footer-sub").textContent = "READY";
-      setLoader(100, "ONLINE", "Neural core ready. Select a module below.");
-
-      if (!state.wasOnline) {
-        logLine("LINK ESTABLISHED — CORE ONLINE", "ok");
+      setLoader(100, "Online", "");
+      if(!state.wasOnline){
+        toast("Server is online", "ok");
         notifyReady();
-        $("server-msg").textContent = "Server online.";
+        msg($("server-msg"), "Ready to convert.", "ok");
       }
     } else {
       $("loader-view").classList.remove("hidden");
       $("work-view").classList.add("hidden");
-      $("center-tag").textContent = nowActive ? "BOOTING" : "STANDBY";
-      $("footer-sub").textContent = nowActive ? "SYNCING" : "STANDBY";
-
-      if (!nowActive) {
+      if(!nowActive){
         state.maxProgress = 0;
-        setLoader(0, "SYSTEM OFFLINE", "Press START to initialize the neural voice core.");
+        setLoader(0, "Standby", "Press Start to boot the neural voice core.");
       } else {
-        const p = progressFromMessage(j.last_message);
-        setLoader(p, "BOOTING", j.last_message || "Waiting for status…");
+        setLoader(progressFromMessage(j.last_message), "Booting", j.last_message || "Waiting for status…");
       }
     }
 
-    if (online && !voicesLoaded) loadVoices();
-    if (!online) voicesLoaded = false;
-
+    if(online && !state.voicesLoaded) loadVoices();
+    if(!online) state.voicesLoaded = false;
     state.wasOnline = online;
-    persist();
-  } catch(e) {
-    $("header-dot").className = "w-3 h-3 bg-hud-warn rounded-full shadow-[0_0_10px_#ffaa00] pulse-slow";
-    $("sys-status-badge").className = "text-hud-warn font-bold";
-    $("sys-status-badge").textContent = "NO SIGNAL";
-    $("server-state-tag").textContent = "RETRYING";
-    $("kaggle-state").textContent = "—";
-    $("tunnel-state").textContent = "—";
-    if (!state.active) {
-      setLoader(0, "NO SIGNAL", e.message);
+  } catch(e){
+    $("notify-btn").className = "status-pill mid";
+    $("pill-text").textContent = "No signal";
+    $("server-title").textContent = "Cannot reach backend";
+    $("server-sub").textContent = e.message;
+    if(!state.active){
+      setLoader(0, "No signal", e.message);
     }
   }
   refreshGo();
 }
 
-/* ============================================================
-   NOTIFICATIONS
-============================================================ */
-function notifyReady() {
-  if (Notification.permission !== "granted") return;
+/* ---------- notifications ---------- */
+function notifyReady(){
+  if(!("Notification" in window) || Notification.permission !== "granted") return;
   const now = Date.now();
-  // rate-limit: at most once every 5 minutes
-  if (now - state.lastNotifiedReadyAt < 5 * 60 * 1000) return;
+  if(now - state.lastNotifiedReadyAt < 5 * 60 * 1000) return;
   state.lastNotifiedReadyAt = now;
-  persist();
-  try {
-    new Notification("NEXUSVOICE Ready", {
-      body: "Neural voice core is online. You can resume conversions.",
-      icon: undefined,
-      tag: "nexus-voice-ready"
-    });
-  } catch(e) {}
+  try{ new Notification("Voice Studio ready", { body: "Server is online and ready to convert.", tag: "vs-ready" }); }catch(e){}
 }
 
 $("notify-btn").onclick = async () => {
-  if (!("Notification" in window)) {
-    $("notify-btn").textContent = "NOT SUPPORTED";
-    return;
-  }
-  if (Notification.permission === "granted") {
-    $("notify-btn").textContent = "ALERTS ON";
-    logLine("Notifications already enabled", "ok");
-    return;
-  }
+  if(!("Notification" in window)){ toast("Notifications not supported", "err"); return; }
+  if(Notification.permission === "granted"){ toast("Alerts already enabled", "ok"); return; }
   const p = await Notification.requestPermission();
-  if (p === "granted") {
-    $("notify-btn").textContent = "ALERTS ON";
-    logLine("Notifications enabled", "ok");
-    notifyReady();
-  } else {
-    $("notify-btn").textContent = "DENIED";
-  }
+  if(p === "granted"){ toast("Alerts enabled", "ok"); notifyReady(); }
+  else toast("Notifications denied", "err");
 };
 
-/* ============================================================
-   VOICES
-============================================================ */
-let voicesLoaded = false;
-async function loadVoices() {
-  try {
+/* ---------- voices ---------- */
+async function loadVoices(){
+  try{
     const j = await api("/api/voices");
-    voicesLoaded = true;
+    state.voicesLoaded = true;
     fillSelect($("f0"), j.f0_methods, "rmvpe");
     fillSelect($("fmt"), j.export_formats, "WAV");
-    if (j.tts_available && j.tts_voices && j.tts_voices.length) {
+    if(j.tts_available && j.tts_voices && j.tts_voices.length){
       fillSelect($("voice"), j.tts_voices, j.tts_voices[0]);
     } else {
-      $("voice").innerHTML = '<option value="">not available on this session</option>';
+      $("voice").innerHTML = '<option value="">Not available</option>';
     }
-    logLine("Voice modules loaded", "ok");
-  } catch(e) { /* retry on next poll */ }
+  } catch(e){}
 }
-function fillSelect(sel, items, chosen) {
+function fillSelect(sel, items, chosen){
   sel.innerHTML = "";
   (items || []).forEach(v => {
     const o = document.createElement("option");
     o.value = v; o.textContent = v;
-    if (v === chosen) o.selected = true;
+    if(v === chosen) o.selected = true;
     sel.appendChild(o);
   });
 }
 
-/* ============================================================
-   START / STOP
-============================================================ */
+/* ---------- start / stop ---------- */
 $("start-btn").onclick = async () => {
   $("start-btn").disabled = true;
-  $("server-msg").textContent = "Submitting start request…";
-  logLine("START requested", "ok");
-  try {
+  msg($("server-msg"), "Starting…");
+  try{
     const j = await api("/api/start", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
+      method:"POST", headers:{"Content-Type":"application/json"},
       body: JSON.stringify({ cpu: $("cpu-mode").checked })
     });
-    $("server-msg").textContent = j.already_running ? "Already running." : "Booting neural core…";
-    if (!j.already_running) {
+    if(j.already_running) msg($("server-msg"), "Already running.", "ok");
+    else {
+      msg($("server-msg"), "Booting. This takes a few minutes…");
       state.maxProgress = 0;
-      setLoader(2, "BOOTING", "Kernel submitted. Awaiting first telemetry…");
+      setLoader(2, "Booting", "Kernel submitted. Awaiting telemetry…");
     }
-  } catch(e) {
-    $("server-msg").textContent = e.message;
-    logLine("START failed: " + e.message, "alert");
+  } catch(e){
+    msg($("server-msg"), e.message, "err");
+    toast(e.message, "err");
   }
   $("start-btn").disabled = false;
   refresh();
@@ -670,314 +605,195 @@ $("start-btn").onclick = async () => {
 
 $("stop-btn").onclick = async () => {
   $("stop-btn").disabled = true;
-  $("server-msg").textContent = "Stopping…";
-  logLine("STOP requested");
-  try {
-    const j = await api("/api/stop", { method: "POST" });
-    $("server-msg").textContent = j.message || "Stopped.";
-  } catch(e) {
-    $("server-msg").textContent = e.message;
-    logLine("STOP failed: " + e.message, "alert");
+  msg($("server-msg"), "Stopping…");
+  try{
+    const j = await api("/api/stop", { method:"POST" });
+    msg($("server-msg"), j.message || "Stopped.", "ok");
+  } catch(e){
+    msg($("server-msg"), e.message, "err");
   }
   $("stop-btn").disabled = false;
   refresh();
 };
 
-$("check-btn").onclick = async () => {
-  $("check-btn").disabled = true;
-  logLine("Manual re-sync");
-  await refresh();
-  $("check-btn").disabled = false;
-};
-
-$("clear-results-btn").onclick = () => {
-  $("convert-results").innerHTML = "";
-  $("tts-results").innerHTML = "";
-  logLine("Results purged");
-};
-
-/* ============================================================
-   TABS
-============================================================ */
+/* ---------- tabs ---------- */
 $("tab-convert").onclick = () => {
   $("tab-convert").classList.add("active"); $("tab-tts").classList.remove("active");
-  $("pane-convert").classList.add("active"); $("pane-tts").classList.remove("active");
+  $("sec-convert").classList.add("active"); $("sec-tts").classList.remove("active");
 };
 $("tab-tts").onclick = () => {
   $("tab-tts").classList.add("active"); $("tab-convert").classList.remove("active");
-  $("pane-tts").classList.add("active"); $("pane-convert").classList.remove("active");
+  $("sec-tts").classList.add("active"); $("sec-convert").classList.remove("active");
 };
 
-/* ============================================================
-   SLIDER DISPLAYS
-============================================================ */
-[["pitch","pitch-v",0],["ir","ir-v",2],["tpitch","tpitch-v",0],["tir","tir-v",2],["rate","rate-v",0]].forEach(([id,out,d]) => {
+/* ---------- slider displays ---------- */
+[["pitch","pitch-v",0,true],["ir","ir-v",2,false],
+ ["tpitch","tpitch-v",0,true],["tir","tir-v",2,false],["rate","rate-v",0,false]].forEach(([id,out,d,signed])=>{
   const el = $(id), show = () => {
     const v = +el.value;
-    $(out).textContent = (id.includes("pitch") && v > 0 ? "+" : "") + v.toFixed(d);
+    $(out).textContent = (signed && v > 0 ? "+" : "") + v.toFixed(d);
   };
   el.addEventListener("input", show); show();
 });
+document.querySelectorAll("[data-p]").forEach(b => b.onclick = () => {
+  $("pitch").value = b.dataset.p;
+  $("pitch").dispatchEvent(new Event("input"));
+});
 
-/* ============================================================
-   AUDIO SOURCE
-============================================================ */
-function refreshGo() {
-  $("convert-btn").disabled = !(state.active && state.hasLink && state.resultBlob);
+/* ---------- audio source ---------- */
+function refreshGo(){
+  $("convert-btn").disabled = !(state.active && state.hasLink && state.audioBlob);
   $("speak-btn").disabled = !(state.active && state.hasLink && $("text").value.trim());
 }
 
-function setAudio(b, name) {
-  state.resultBlob = b;
-  state.resultName = name;
+function setAudio(blob, name){
+  state.audioBlob = blob;
+  state.audioName = name;
   const p = $("preview");
-  p.src = URL.createObjectURL(b);
+  p.src = URL.createObjectURL(blob);
   p.classList.remove("hidden");
   refreshGo();
 }
 
 $("file").onchange = e => {
   const f = e.target.files[0];
-  if (f) { setAudio(f, f.name); logLine("Loaded " + f.name, "ok"); }
+  if(f) setAudio(f, f.name);
 };
 $("text").addEventListener("input", refreshGo);
 
-/* ============================================================
-   RECORD
-============================================================ */
-function encodeWav(samples, rate) {
-  const buf = new ArrayBuffer(44 + samples.length * 2), v = new DataView(buf);
-  const w = (o, s) => { for (let i = 0; i < s.length; i++) v.setUint8(o + i, s.charCodeAt(i)); };
-  w(0, "RIFF"); v.setUint32(4, 36 + samples.length * 2, true); w(8, "WAVE"); w(12, "fmt ");
-  v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
-  v.setUint32(24, rate, true); v.setUint32(28, rate * 2, true); v.setUint16(32, 2, true); v.setUint16(34, 16, true);
-  w(36, "data"); v.setUint32(40, samples.length * 2, true);
+/* ---------- recorder ---------- */
+function encodeWav(samples, rate){
+  const buf = new ArrayBuffer(44 + samples.length*2), v = new DataView(buf);
+  const w = (o,s) => { for(let i=0;i<s.length;i++) v.setUint8(o+i, s.charCodeAt(i)); };
+  w(0,"RIFF"); v.setUint32(4,36+samples.length*2,true); w(8,"WAVE"); w(12,"fmt ");
+  v.setUint32(16,16,true); v.setUint16(20,1,true); v.setUint16(22,1,true);
+  v.setUint32(24,rate,true); v.setUint32(28,rate*2,true); v.setUint16(32,2,true); v.setUint16(34,16,true);
+  w(36,"data"); v.setUint32(40,samples.length*2,true);
   let o = 44;
-  for (let i = 0; i < samples.length; i++, o += 2) {
+  for(let i=0;i<samples.length;i++,o+=2){
     const s = Math.max(-1, Math.min(1, samples[i]));
-    v.setInt16(o, s < 0 ? s * 0x8000 : s * 0x7FFF, true);
+    v.setInt16(o, s<0 ? s*0x8000 : s*0x7FFF, true);
   }
-  return new Blob([v], { type: "audio/wav" });
+  return new Blob([v], {type:"audio/wav"});
 }
+
 let mr = null, chunks = [], recTimer = null, recStart = 0;
 $("rec-btn").onclick = async () => {
-  if (mr && mr.state === "recording") { mr.stop(); return; }
-  try {
+  if(mr && mr.state === "recording"){ mr.stop(); return; }
+  try{
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
     chunks = []; mr = new MediaRecorder(stream);
     mr.ondataavailable = e => chunks.push(e.data);
     mr.onstop = async () => {
       clearInterval(recTimer); stream.getTracks().forEach(t => t.stop());
-      $("rec-btn").textContent = "REC";
-      $("rec-btn").classList.remove("rec-active");
-      $("rec-info").textContent = "Processing recording...";
-      try {
+      $("rec-btn").classList.remove("recording");
+      msg($("rec-info"), "Processing…");
+      try{
         const ctx = new (window.AudioContext || window.webkitAudioContext)();
         const buf = await ctx.decodeAudioData(await new Blob(chunks).arrayBuffer());
         setAudio(encodeWav(buf.getChannelData(0), buf.sampleRate), "recording.wav");
-        $("rec-info").textContent = "Recorded " + buf.duration.toFixed(1) + "s";
-        logLine("Recording captured (" + buf.duration.toFixed(1) + "s)", "ok");
-      } catch(e) {
-        $("rec-info").textContent = "Could not read recording: " + e.message;
-        logLine("Recording failed: " + e.message, "alert");
+        msg($("rec-info"), "Recorded " + buf.duration.toFixed(1) + "s", "ok");
+      } catch(e){
+        msg($("rec-info"), "Could not read recording: " + e.message, "err");
       }
     };
     mr.start(); recStart = Date.now();
-    $("rec-btn").textContent = "STOP";
-    $("rec-btn").classList.add("rec-active");
+    $("rec-btn").classList.add("recording");
     recTimer = setInterval(() => {
-      const s = (Date.now() - recStart) / 1000;
-      $("rec-info").textContent = "Recording " + s.toFixed(0) + "s";
-      if (s >= 60) mr.stop();
+      const s = (Date.now() - recStart)/1000;
+      msg($("rec-info"), "Recording " + s.toFixed(0) + "s");
+      if(s >= 60) mr.stop();
     }, 250);
-  } catch(e) {
-    $("rec-info").textContent = "Microphone not available: " + e.message;
-    logLine("Mic error: " + e.message, "alert");
+  } catch(e){
+    msg($("rec-info"), "Mic unavailable: " + e.message, "err");
   }
 };
 
-/* ============================================================
-   CONVERT
-============================================================ */
+/* ---------- convert ---------- */
 $("convert-btn").onclick = async () => {
   $("convert-btn").disabled = true;
   const settings = {
     pitch: +$("pitch").value,
     index_rate: +$("ir").value,
     f0: $("f0").value,
-    fmt: $("fmt").value
+    fmt: $("fmt").value,
   };
   const fd = new FormData();
-  fd.append("audio", state.resultBlob, state.resultName);
+  fd.append("audio", state.audioBlob, state.audioName);
   fd.append("settings", JSON.stringify(settings));
 
   const start = Date.now();
   const tick = setInterval(() => {
-    $("convert-msg").textContent = "Converting... " + Math.round((Date.now() - start) / 1000) + "s";
+    msg($("convert-msg"), "Converting… " + Math.round((Date.now()-start)/1000) + "s");
   }, 500);
-  logLine("CONVERT dispatched", "ok");
-  $("footer-sub").textContent = "PROCESSING";
 
-  try {
-    const j = await api("/api/convert", { method: "POST", body: fd });
+  try{
+    const j = await api("/api/convert", { method:"POST", body: fd });
     const d = document.createElement("div");
-    d.className = "border border-hud-cyan/30 rounded p-2 bg-hud-dark/40";
+    d.className = "result";
     d.innerHTML =
-      '<div class="text-[10px] text-hud-dim">pitch ' + (settings.pitch > 0 ? "+" : "") + settings.pitch +
-      ' · ' + settings.f0 + ' · index ' + settings.index_rate.toFixed(2) +
-      ' · ' + Math.round((Date.now() - start) / 1000) + 's</div>' +
-      '<audio controls src="' + BACKEND + '/api/result/' + j.id + '" class="w-full mt-1"></audio>' +
-      '<a class="text-hud-cyan text-[11px] underline mt-1 inline-block" href="' + BACKEND +
-      '/api/result/' + j.id + '?dl=1">DOWNLOAD</a>';
+      '<div class="meta">' +
+        '<span>pitch ' + (settings.pitch>0?"+":"") + settings.pitch + '</span>' +
+        '<span>' + settings.f0 + '</span>' +
+        '<span>index ' + settings.index_rate.toFixed(2) + '</span>' +
+        '<span>' + Math.round((Date.now()-start)/1000) + 's</span>' +
+      '</div>' +
+      '<audio controls src="' + BACKEND + '/api/result/' + j.id + '"></audio>' +
+      '<div class="actions"><a href="' + BACKEND + '/api/result/' + j.id + '?dl=1">Download</a></div>';
     $("convert-results").prepend(d);
-    $("convert-msg").textContent = j.message || "Conversion complete.";
-    logLine("Conversion complete", "ok");
-  } catch(e) {
-    $("convert-msg").textContent = e.message;
-    logLine("Convert failed: " + e.message, "alert");
+    msg($("convert-msg"), j.message || "Done.", "ok");
+    toast("Conversion complete", "ok");
+  } catch(e){
+    msg($("convert-msg"), e.message, "err");
+    toast(e.message, "err");
   }
   clearInterval(tick);
-  $("footer-sub").textContent = state.active && state.hasLink ? "READY" : "STANDBY";
   refreshGo();
 };
 
-/* ============================================================
-   TTS
-============================================================ */
+/* ---------- tts ---------- */
 $("speak-btn").onclick = async () => {
   $("speak-btn").disabled = true;
   const settings = {
     pitch: +$("tpitch").value,
     index_rate: +$("tir").value,
     voice: $("voice").value,
-    rate: +$("rate").value
+    rate: +$("rate").value,
   };
   const start = Date.now();
   const tick = setInterval(() => {
-    $("tts-msg").textContent = "Generating... " + Math.round((Date.now() - start) / 1000) + "s";
+    msg($("tts-msg"), "Generating… " + Math.round((Date.now()-start)/1000) + "s");
   }, 500);
-  logLine("TTS dispatched", "ok");
 
-  try {
+  try{
     const j = await api("/api/tts", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
+      method:"POST", headers:{"Content-Type":"application/json"},
       body: JSON.stringify({ text: $("text").value, settings })
     });
     const d = document.createElement("div");
-    d.className = "border border-hud-cyan/30 rounded p-2 bg-hud-dark/40";
+    d.className = "result";
     d.innerHTML =
-      '<div class="text-[10px] text-hud-dim">' + $("voice").value +
-      ' · pitch ' + (settings.pitch > 0 ? "+" : "") + settings.pitch +
-      ' · ' + Math.round((Date.now() - start) / 1000) + 's</div>' +
-      '<audio controls src="' + BACKEND + '/api/result/' + j.id + '" class="w-full mt-1"></audio>' +
-      '<a class="text-hud-cyan text-[11px] underline mt-1 inline-block" href="' + BACKEND +
-      '/api/result/' + j.id + '?dl=1">DOWNLOAD</a>';
+      '<div class="meta">' +
+        '<span>' + $("voice").value + '</span>' +
+        '<span>pitch ' + (settings.pitch>0?"+":"") + settings.pitch + '</span>' +
+        '<span>' + Math.round((Date.now()-start)/1000) + 's</span>' +
+      '</div>' +
+      '<audio controls src="' + BACKEND + '/api/result/' + j.id + '"></audio>' +
+      '<div class="actions"><a href="' + BACKEND + '/api/result/' + j.id + '?dl=1">Download</a></div>';
     $("tts-results").prepend(d);
-    $("tts-msg").textContent = j.message || "Speech ready.";
-    logLine("TTS complete", "ok");
-  } catch(e) {
-    $("tts-msg").textContent = e.message;
-    logLine("TTS failed: " + e.message, "alert");
+    msg($("tts-msg"), j.message || "Done.", "ok");
+    toast("Speech ready", "ok");
+  } catch(e){
+    msg($("tts-msg"), e.message, "err");
+    toast(e.message, "err");
   }
   clearInterval(tick);
   refreshGo();
 };
 
-/* ============================================================
-   CLOCK + VITALS (decorative)
-============================================================ */
-function tickClock() {
-  $("local-clock").textContent = new Date().toTimeString().split(" ")[0];
-}
-setInterval(tickClock, 1000); tickClock();
-
-setInterval(() => {
-  const bpm = $("vital-bpm");
-  const cur = parseInt(bpm.textContent, 10) || 72;
-  bpm.textContent = Math.max(68, Math.min(84, cur + (Math.floor(Math.random() * 5) - 2)));
-  const cpu = Math.floor(Math.random() * 25) + 18;
-  $("cpu-val").textContent = cpu + "%";
-  $("cpu-bar").style.width = cpu + "%";
-  const mem = (Math.random() * 4 + 10).toFixed(1);
-  $("mem-val").textContent = mem + " GB";
-  $("mem-bar").style.width = (mem / 32 * 100) + "%";
-}, 2500);
-
-/* ============================================================
-   WAVEFORM
-============================================================ */
-const waveBars = [];
-for (let i = 0; i < 32; i++) {
-  const bar = document.createElement("div");
-  bar.className = "w-1 bg-hud-cyan/80 rounded-full transition-all duration-150";
-  bar.style.height = "6px";
-  $("wave-container").appendChild(bar);
-  waveBars.push(bar);
-}
-setInterval(() => {
-  const anyPlaying = !$("preview").paused || [...document.querySelectorAll("audio")].some(a => !a.paused);
-  waveBars.forEach(bar => {
-    const h = anyPlaying
-      ? Math.floor(Math.random() * 30) + 6
-      : Math.floor(Math.random() * 8) + 4;
-    bar.style.height = h + "px";
-  });
-}, 130);
-
-/* ============================================================
-   CLI COMMANDS
-============================================================ */
-function cliPrint(text, cls) {
-  const div = document.createElement("div");
-  div.className = cls || "text-hud-dim";
-  div.innerHTML = text;
-  $("cli-output").appendChild(div);
-  $("cli-output").scrollTop = $("cli-output").scrollHeight;
-}
-
-$("cli-form").addEventListener("submit", e => {
-  e.preventDefault();
-  const cmd = $("cli-input").value.trim().toLowerCase();
-  if (!cmd) return;
-  cliPrint("&gt; " + cmd, "text-hud-cyan font-bold");
-  $("cli-input").value = "";
-  runCmd(cmd);
-});
-
-function runCmd(cmd) {
-  if (cmd === "help") {
-    cliPrint("start — boot neural core");
-    cliPrint("stop — shut down server");
-    cliPrint("status — print current state");
-    cliPrint("convert — dispatch a conversion");
-    cliPrint("speak — dispatch text to speech");
-    cliPrint("clear — clear this output");
-  } else if (cmd === "start") {
-    $("start-btn").click();
-  } else if (cmd === "stop") {
-    $("stop-btn").click();
-  } else if (cmd === "status") {
-    cliPrint("active=" + state.active + " link=" + state.hasLink + " kaggle=" + (state.kaggleState || "—"));
-  } else if (cmd === "convert") {
-    if ($("convert-btn").disabled) cliPrint("Cannot convert: server offline or no audio loaded", "text-hud-alert");
-    else $("convert-btn").click();
-  } else if (cmd === "speak") {
-    if ($("speak-btn").disabled) cliPrint("Cannot speak: server offline or no text entered", "text-hud-alert");
-    else $("speak-btn").click();
-  } else if (cmd === "clear") {
-    $("cli-output").innerHTML = "";
-  } else {
-    cliPrint("Unknown directive: " + cmd, "text-hud-alert");
-  }
-}
-
-/* ============================================================
-   BOOT
-============================================================ */
-(async function boot() {
-  if (Notification.permission === "granted") $("notify-btn").textContent = "ALERTS ON";
-  logLine("Booting UI");
+/* ---------- boot ---------- */
+(async function boot(){
+  if("Notification" in window && Notification.permission === "granted"){}
   await refresh();
   setInterval(refresh, POLL_MS);
 })();
